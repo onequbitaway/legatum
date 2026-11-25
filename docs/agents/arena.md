@@ -15,7 +15,7 @@ flowchart LR
 ```
 
 1. The schedule makes one fixture for each group of entrants, in each seat order, for each seed. In two-player matches, each pair plays two times for each seed, one time in each seat.
-2. The runner plays the fixtures with the offline match runner. It keeps each result as one line in `results.jsonl` and a save in `games/`.
+2. The runner plays the fixtures with the offline match runner. It keeps each result as one line in `results.jsonl` and a save in `games/`, in the app's save format.
 3. The ratings use Elo. The runner applies the results in schedule order. Thus the ratings do not change when matches finish in a different order.
 
 ## Write an arena file

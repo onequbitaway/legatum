@@ -77,7 +77,11 @@ fn an_arena_plays_every_fixture_once_and_resumes_without_replaying() {
     assert_eq!(records.len(), 6);
     assert_eq!(seen.load(Ordering::SeqCst), 6);
     for record in &records {
-        assert!(dir.join(&record.save).is_file());
+        let save = std::fs::read_to_string(dir.join(&record.save)).unwrap();
+        assert!(
+            save.contains(r#""format":"legatum-save""#),
+            "an app save file"
+        );
         assert_eq!(record.report.result.turn, 4);
     }
     let again = run(&config, Path::new("."), &dir, 3, |_, _, _| {

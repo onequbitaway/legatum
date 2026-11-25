@@ -5,6 +5,7 @@ use crate::config::{ArenaConfig, Play};
 use crate::ratings::{Placement, Ratings};
 use crate::schedule::{Fixture, fixtures};
 use legatum_agent::runner::{MatchConfig, MatchReport, run_match};
+use legatum_agent::save_file::app_save_file;
 use legatum_agent::setup::MatchSetup;
 use legatum_core::PlayerId;
 use serde::{Deserialize, Serialize};
@@ -216,7 +217,7 @@ fn play(
         |_| {},
     )?;
     let save = PathBuf::from(GAMES).join(format!("{index:04}.legatum"));
-    std::fs::write(dir.join(&save), session.save_json())
+    std::fs::write(dir.join(&save), app_save_file(&session.save_json())?)
         .map_err(|e| format!("{}: {e}", save.display()))?;
     Ok(MatchRecord {
         fixture: fixture.clone(),
