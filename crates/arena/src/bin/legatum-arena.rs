@@ -3,6 +3,7 @@
 use clap::{Parser, Subcommand};
 use legatum_arena::config::ArenaConfig;
 use legatum_arena::leaderboard::{Leaderboard, leaderboard};
+use legatum_arena::report::write_report;
 use legatum_arena::run::{load_records, run};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -16,7 +17,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Play every fixture without a result yet, then print the standings.
+    /// Play every fixture without a result yet, then print the standings and write the report.
     Run {
         /// The arena file (JSON).
         #[arg(long)]
@@ -35,12 +36,20 @@ enum Command {
         #[arg(long)]
         out: PathBuf,
     },
+    /// Write the HTML report (report/index.html in the arena folder) from the results so far.
+    Report {
+        #[arg(long)]
+        config: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+    },
 }
 
 fn main() -> ExitCode {
     let result = match Cli::parse().command {
         Command::Run { config, out, jobs } => play(&config, &out, jobs),
         Command::Table { config, out } => table(&config, &out),
+        Command::Report { config, out } => report(&config, &out),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
@@ -61,7 +70,15 @@ fn play(config_path: &Path, out: &Path, jobs: usize) -> Result<(), String> {
             record.fixture.id, result.turn, result.reason
         );
     })?;
-    table(config_path, out)
+    table(config_path, out)?;
+    report(config_path, out)
+}
+
+fn report(config_path: &Path, out: &Path) -> Result<(), String> {
+    let config = ArenaConfig::load(config_path)?;
+    let index = write_report(&config, &load_records(out)?, out)?;
+    println!("Report: {}", index.display());
+    Ok(())
 }
 
 fn table(config_path: &Path, out: &Path) -> Result<(), String> {
