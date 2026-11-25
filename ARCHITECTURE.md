@@ -31,6 +31,7 @@ Direct dependencies, from the manifests:
 | `archive` | `wasm` |
 | `analysis` | `core`, `wasm`, `archive` |
 | `sim` | `core`, `ai`, `wasm`, `archive`, `analysis` |
+| `agent` | `core` |
 
 Notes:
 

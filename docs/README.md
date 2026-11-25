@@ -4,6 +4,7 @@
 | --- | --- |
 | [../.claude/skills/legatum-rules/references/index.md](../.claude/skills/legatum-rules/references/index.md) | How the game works, verified against the code: orders, turn resolution, what is available when, and the systems that do not exist. Start here before proposing a mechanic. |
 | [../ARCHITECTURE.md](../ARCHITECTURE.md) | Crate graph, turn pipeline, determinism, clients, saves, AI layers. |
+| [agents/](agents/README.md) | Agent seats: programs that play a seat under the same rules and view as a human, and the line protocol they speak. |
 | [engineering-notes.md](engineering-notes.md) | Dated engine, determinism, AI measurement, testing, and UI boundary lessons from development. |
 | [game-archive.md](game-archive.md) | The game-recording format used for analysis. |
 | [ai-evolution.md](archive/ai-evolution.md), [ai-competitiveness.md](ai-competitiveness.md), [ai-proxy-benchmark.md](archive/ai-proxy-benchmark.md), [human-playbook-benchmark.md](archive/human-playbook-benchmark.md), [strategy-diversity.md](strategy-diversity.md), [opening-league.md](archive/opening-league.md) | How the AI is measured and improved. |
