@@ -26,6 +26,7 @@ pub mod improvements;
 pub mod landmarks;
 pub mod los;
 pub mod mapgen;
+pub mod menu;
 pub mod objectives;
 pub mod orders;
 pub mod path;
@@ -78,6 +79,7 @@ pub use forecast::{
 };
 pub use game::{new_game, try_new_game};
 pub use hex::Hex;
+pub use menu::{OrderMenu, order_menu};
 pub use orders::{Order, OrderError};
 pub use resources::{Resource, ResourceClass, SupplyUser};
 pub use rules::{resolve_turn, validate_orders};
