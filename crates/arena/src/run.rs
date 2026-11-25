@@ -80,18 +80,27 @@ pub fn load_records(dir: &Path) -> Result<Vec<MatchRecord>, String> {
 /// Ratings from the records of the current fixtures, applied in fixture order, so they do not
 /// depend on which match finished first.
 pub fn ratings(config: &ArenaConfig, records: &[MatchRecord]) -> Ratings {
+    rating_history(config, records)
+        .pop()
+        .expect("the history starts with the starting ratings")
+}
+
+/// The ratings before any match, then after each played fixture in fixture order.
+pub fn rating_history(config: &ArenaConfig, records: &[MatchRecord]) -> Vec<Ratings> {
     let by_id: BTreeMap<&str, &MatchRecord> =
         records.iter().map(|r| (r.fixture.id.as_str(), r)).collect();
     let mut ratings = Ratings::default();
     for entrant in &config.entrants {
         ratings.entrants.entry(entrant.name.clone()).or_default();
     }
+    let mut history = vec![ratings.clone()];
     for fixture in fixtures(&names(config), &config.schedule) {
         if let Some(record) = by_id.get(fixture.id.as_str()) {
             ratings.apply(&record.placements());
+            history.push(ratings.clone());
         }
     }
-    ratings
+    history
 }
 
 pub fn names(config: &ArenaConfig) -> Vec<String> {
