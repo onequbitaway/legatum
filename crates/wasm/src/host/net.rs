@@ -260,6 +260,11 @@ impl NetHost {
         self.host.summary()
     }
 
+    /// Whether the live game is over (false with no game).
+    pub fn finished(&self) -> bool {
+        self.host.finished()
+    }
+
     /// Starts a game from a setup (humans first). Everyone connected must rejoin.
     pub fn new_game(&mut self, setup_json: &str) -> Result<(), String> {
         self.reset_clock();

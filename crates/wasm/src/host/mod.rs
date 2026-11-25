@@ -985,6 +985,11 @@ impl Host {
         }
     }
 
+    /// Whether the live game is over.
+    pub(crate) fn finished(&self) -> bool {
+        self.game.as_ref().is_some_and(|g| g.session.state.finished)
+    }
+
     /// The planning turn of the live game, if there is one.
     pub(crate) fn turn(&self) -> Option<u32> {
         self.game.as_ref().map(|g| g.session.state.turn)
