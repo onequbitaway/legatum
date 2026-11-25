@@ -8,5 +8,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+legatum-core.workspace = true
+legatum-wasm = { path = "../wasm" }
+legatum-agent = { path = "../agent" }
 serde.workspace = true
 serde_json.workspace = true

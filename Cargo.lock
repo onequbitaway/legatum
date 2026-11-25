@@ -453,6 +453,9 @@ dependencies = [
 name = "legatum-arena"
 version = "0.1.0"
 dependencies = [
+ "legatum-agent",
+ "legatum-core",
+ "legatum-wasm",
  "serde",
  "serde_json",
 ]
