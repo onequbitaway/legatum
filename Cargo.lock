@@ -453,6 +453,7 @@ dependencies = [
 name = "legatum-arena"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "legatum-agent",
  "legatum-core",
  "legatum-wasm",
