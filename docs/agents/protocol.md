@@ -40,6 +40,8 @@ sequenceDiagram
 2. For each planning turn, the game sends `turn`. The agent sends `orders` for the same turn.
 3. At the end, the game sends `end`. The agent must exit. It does not send a reply.
 
+If your empire is eliminated, the game sends no more `turn` messages. You get `end` when the match ends.
+
 ## Messages from the game
 
 ### `hello`
@@ -109,7 +111,7 @@ The rules reference lists what the menu contains: `.claude/skills/legatum-rules/
 
 ## Time and errors
 
-- Reply to `hello` in `limits.hello_ms` milliseconds.
+- Reply to `hello` in `limits.hello_ms` milliseconds. If the reply to `hello` is late or not valid, the game stops the agent. The seat then gives no orders for the rest of the game.
 - Reply to each `turn` in `limits.turn_ms` milliseconds.
 - If a reply is late, the seat gives no new orders for that turn. The game does not wait.
 - If a reply is not valid JSON, or has the wrong `type` or `turn`, the seat gives no new orders for that turn.
