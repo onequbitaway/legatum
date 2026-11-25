@@ -136,10 +136,12 @@ pub fn run(
     let next = AtomicUsize::new(0);
     let played = Mutex::new(Vec::new());
     let failures = Mutex::new(Vec::new());
+    // Agents run in their own folders, so their paths must not depend on ours.
+    let base = std::path::absolute(base).map_err(|e| format!("{}: {e}", base.display()))?;
     let plays: BTreeMap<&str, Play> = config
         .entrants
         .iter()
-        .map(|e| (e.name.as_str(), e.play(base)))
+        .map(|e| (e.name.as_str(), e.play(&base)))
         .collect();
     std::thread::scope(|scope| {
         for _ in 0..jobs.max(1) {

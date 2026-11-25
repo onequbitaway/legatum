@@ -80,12 +80,12 @@ fn table(config_path: &Path, out: &Path) -> Result<(), String> {
 fn print_board(board: &Leaderboard) {
     println!("{} of {} matches played", board.played, board.scheduled);
     println!(
-        "{:>4}  {:<24} {:<16} {:>7} {:>5} {:>9} {:>6} {:>6}",
-        "rank", "entrant", "kind", "elo", "games", "W-D-L", "VP", "late"
+        "{:>4}  {:<24} {:<16} {:>7} {:>5} {:>9} {:>6} {:>6} {:>6}",
+        "rank", "entrant", "kind", "elo", "games", "W-D-L", "VP", "late", "errors"
     );
     for s in &board.standings {
         println!(
-            "{:>4}  {:<24} {:<16} {:>7.1} {:>5} {:>9} {:>6.1} {:>6}",
+            "{:>4}  {:<24} {:<16} {:>7.1} {:>5} {:>9} {:>6.1} {:>6} {:>6}",
             s.rank,
             s.name,
             s.kind,
@@ -93,7 +93,8 @@ fn print_board(board: &Leaderboard) {
             s.matches,
             format!("{}-{}-{}", s.wins, s.draws, s.losses),
             f64::from(s.mean_vp_tenths) / 10.0,
-            s.timeouts
+            s.timeouts,
+            s.errors
         );
     }
 }
