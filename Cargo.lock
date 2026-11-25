@@ -357,6 +357,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "legatum-agent"
+version = "0.1.0"
+dependencies = [
+ "legatum-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "legatum-ai"
 version = "0.1.0"
 dependencies = [
