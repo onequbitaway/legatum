@@ -4,5 +4,6 @@
 pub mod config;
 pub mod leaderboard;
 pub mod ratings;
+pub mod report;
 pub mod run;
 pub mod schedule;
