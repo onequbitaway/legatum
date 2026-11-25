@@ -196,7 +196,7 @@ impl RoomError {
 /// A guest's display name as stored everywhere (seat, staging, saved history): control and
 /// format characters (bidi overrides, zero-width marks) removed, whitespace collapsed, trimmed
 /// and cut to 80 characters. May be empty; callers choose their own fallback.
-pub(crate) fn clean_name(value: &str) -> String {
+pub fn clean_name(value: &str) -> String {
     fn hidden(c: char) -> bool {
         c.is_control()
             || matches!(c, '\u{AD}' | '\u{61C}' | '\u{200B}'..='\u{200F}' | '\u{202A}'..='\u{202E}'

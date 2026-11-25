@@ -14,6 +14,7 @@ mod staging;
 pub use protocol::{SeatStatus, Status};
 pub use staging::{
     FactionChoice, Occupant, SeatKind, StagingConfig, StagingSeat, StagingSettings, StagingState,
+    clean_name,
 };
 
 use crate::session::{BrainKind, Session};
@@ -24,7 +25,7 @@ use legatum_core::{
 };
 use protocol::{ClientMessage, ServerMessage};
 use serde::Serialize;
-use staging::{Room, RoomError, clean_name};
+use staging::{Room, RoomError};
 use std::{collections::BTreeMap, sync::Arc};
 
 pub(crate) type ConnectionId = u64;
