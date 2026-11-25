@@ -133,3 +133,23 @@ pub enum EndReason {
     TurnLimit,
     Stopped,
 }
+
+/// One message as one line, without the newline. Compact JSON never holds a raw newline.
+pub fn encode<T: Serialize>(message: &T) -> String {
+    serde_json::to_string(message).expect("protocol messages serialize")
+}
+
+/// Reads one agent line. Refuses lines over [`MAX_AGENT_LINE`] and answers over [`MAX_ORDERS`].
+pub fn decode_from_agent(line: &str) -> Result<FromAgent, String> {
+    if line.len() > MAX_AGENT_LINE {
+        return Err(format!("line over {MAX_AGENT_LINE} bytes"));
+    }
+    let message: FromAgent =
+        serde_json::from_str(line.trim_end()).map_err(|e| format!("bad message: {e}"))?;
+    if let FromAgent::Orders { orders, .. } = &message
+        && orders.len() > MAX_ORDERS
+    {
+        return Err(format!("{} orders (at most {MAX_ORDERS})", orders.len()));
+    }
+    Ok(message)
+}
