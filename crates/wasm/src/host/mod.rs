@@ -2189,6 +2189,81 @@ mod tests {
         (host.connect(sender, false).unwrap(), receiver)
     }
 
+    fn headless_game(humans: usize) -> Host {
+        let mut setup = GameSetup::all_ai(31);
+        setup.players.truncate(4);
+        for p in setup.players.iter_mut().take(humans) {
+            p.is_human = true;
+        }
+        let mut host = Host::new(None, 5).unwrap();
+        host.new_game(setup).unwrap();
+        host
+    }
+
+    #[test]
+    fn issued_credentials_let_guests_join_every_seat_including_the_first() {
+        let mut host = headless_game(2);
+        let issued = host.issue_seat_credentials().unwrap();
+        assert_eq!(issued.len(), 2);
+        assert_eq!(issued[1].player, PlayerId(1));
+        assert_ne!(issued[0].token, issued[1].token);
+        assert_eq!(host.summary().open_seats, 0);
+        for credential in &issued {
+            let (id, receiver) = guest(&mut host);
+            host.message(
+                id,
+                ClientMessage::Join {
+                    seat: credential.seat,
+                    name: "Agent".into(),
+                    token: credential.token.clone(),
+                },
+            )
+            .unwrap();
+            assert!(drain(&receiver).iter().any(|m| m["type"] == "welcome"));
+        }
+    }
+
+    #[test]
+    fn a_seat_with_an_issued_credential_cannot_be_taken() {
+        let mut host = headless_game(2);
+        host.issue_seat_credentials().unwrap();
+        let (id, _receiver) = guest(&mut host);
+        let error = host.message(id, take(1, None)).unwrap_err();
+        assert!(error.contains("reserved"), "{error}");
+    }
+
+    #[test]
+    fn new_credentials_replace_old_ones_but_never_while_a_seat_is_connected() {
+        let mut host = headless_game(2);
+        let first = host.issue_seat_credentials().unwrap();
+        let second = host.issue_seat_credentials().unwrap();
+        assert_ne!(first[0].token, second[0].token);
+        let (id, receiver) = guest(&mut host);
+        host.message(
+            id,
+            ClientMessage::Join {
+                seat: 0,
+                name: "Late".into(),
+                token: first[0].token.clone(),
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            error_code(&drain(&receiver)).as_deref(),
+            Some("invalid_seat_credential")
+        );
+        host.message(
+            id,
+            ClientMessage::Join {
+                seat: 0,
+                name: "On time".into(),
+                token: second[0].token.clone(),
+            },
+        )
+        .unwrap();
+        assert!(host.issue_seat_credentials().is_err());
+    }
+
     /// Two or three human seats: seat 0 is the host's, the rest are open for guests.
     fn open_game(humans: usize) -> Host {
         let mut setup = GameSetup::standard(7, [Faction::India, Faction::Byzantium]);
