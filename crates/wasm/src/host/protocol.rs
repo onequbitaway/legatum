@@ -1,7 +1,7 @@
 use super::staging::{FactionChoice, StagingState};
 use legatum_core::{
     AlongsideAttack, AttackMode, BattleForecast, CityAssaultForecast, Faction, Hex, Order,
-    OrderError, PlayerId, PlayerView, TeamId, UnitId,
+    OrderError, OrderMenu, PlayerId, PlayerView, TeamId, UnitId,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -53,6 +53,11 @@ pub(crate) enum ClientMessage {
         mode: AttackMode,
         #[serde(default)]
         alongside: Vec<AlongsideAttack>,
+    },
+    /// The order menu of the sender's seat for the current planning turn
+    /// (`legatum_core::order_menu`), for programs that play a seat.
+    Menu {
+        req_id: Value,
     },
     Ping,
     /// A map ping for the sender's teammates (never stored in the game). Only sent when the
@@ -154,6 +159,10 @@ pub(crate) enum ServerMessage {
     Assault {
         req_id: Value,
         assault: Option<CityAssaultForecast>,
+    },
+    Menu {
+        req_id: Value,
+        menu: Box<OrderMenu>,
     },
     Error {
         #[serde(skip_serializing_if = "Option::is_none")]

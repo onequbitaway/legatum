@@ -135,12 +135,17 @@ struct Seat {
     joined_at: Option<(ConnectionId, u32)>,
     /// The planning turn and how many map pings this seat has sent in it.
     pings: (u32, u32),
+    /// The planning turn and how many order menus this seat has asked for in it.
+    menus: (u32, u32),
 }
 
 /// Most orders one seat may stage per turn. A real turn stages a few hundred at most.
 const MAX_STAGED_ORDERS: usize = 2000;
 /// Most map pings one seat may send per planning turn; later ones are dropped without an error.
 const MAX_PINGS_PER_TURN: u32 = 24;
+/// Most order menus one seat may ask for per planning turn. A menu costs the host tens of
+/// milliseconds late in a game; a program needs one or two per turn.
+const MAX_MENUS_PER_TURN: u32 = 8;
 /// Most validation errors sent back in one reply.
 const MAX_VALIDATION_ERRORS: usize = 100;
 
@@ -176,6 +181,7 @@ impl Game {
                 orders: Vec::new(),
                 joined_at: None,
                 pings: (0, 0),
+                menus: (0, 0),
             })
             .collect();
         Ok(Self {
@@ -881,6 +887,18 @@ impl Host {
                 let view = player_view(&game.session.state, seat.player);
                 let assault = forecast_city_assault(&view, unit, target, mode, &alongside);
                 self.send(connection, &ServerMessage::Assault { req_id, assault });
+            }
+            ClientMessage::Menu { req_id } => {
+                let turn = game.session.state.turn;
+                if seat.menus.0 != turn {
+                    seat.menus = (turn, 0);
+                }
+                if seat.menus.1 >= MAX_MENUS_PER_TURN {
+                    return Err(format!("At most {MAX_MENUS_PER_TURN} order menus per turn"));
+                }
+                seat.menus.1 += 1;
+                let menu = Box::new(legatum_core::order_menu(&game.session.state, seat.player));
+                self.send(connection, &ServerMessage::Menu { req_id, menu });
             }
             ClientMessage::MapPing { hex } => {
                 // Team talk only: never stored, never sent to another team, off the queue of
