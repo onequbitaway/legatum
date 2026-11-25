@@ -1,31 +1,15 @@
 //! Agents here are small `sh` scripts, so the tests need a Unix shell.
 #![cfg(unix)]
 
+mod common;
+
 use legatum_agent::process::{AgentCommand, AgentError, AgentProcess};
 use legatum_agent::protocol::{EndReason, GameInfo, Limits, MatchResult, Seat, ToAgent, encode};
 use legatum_core::{Faction, GameSetup, PlayerId, TeamId, new_game, order_menu, player_view};
 use std::time::{Duration, Instant};
 
-/// Answers hello with its name and each turn with no orders, for the turn it was sent.
-const ECHO: &str = r#"
-while IFS= read -r line; do
-  case "$line" in
-    *'"type":"hello"'*) echo '{"type":"hello","name":"echo"}' ;;
-    *'"type":"turn"'*)
-      t=$(printf '%s' "$line" | sed 's/^{"type":"turn","turn":\([0-9]*\).*/\1/')
-      echo "{\"type\":\"orders\",\"turn\":$t,\"orders\":[]}" ;;
-    *'"type":"end"'*) exit 0 ;;
-  esac
-done
-"#;
-
 fn sh(script: &str) -> AgentProcess {
-    AgentProcess::spawn(&AgentCommand {
-        program: "sh".into(),
-        args: vec!["-c".into(), script.into()],
-        dir: None,
-    })
-    .expect("sh starts")
+    AgentProcess::spawn(&common::sh(script)).expect("sh starts")
 }
 
 fn hello() -> ToAgent {
@@ -74,7 +58,7 @@ const LONG: Duration = Duration::from_secs(10);
 
 #[test]
 fn an_agent_says_hello_answers_turns_and_exits_on_end() {
-    let mut agent = sh(ECHO);
+    let mut agent = sh(common::ECHO);
     assert_eq!(agent.hello(&hello(), LONG).unwrap(), "echo");
     for t in 1..=3 {
         assert_eq!(agent.turn(&turn(t), t, LONG).unwrap(), Vec::new());
