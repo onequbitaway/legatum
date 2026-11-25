@@ -273,3 +273,7 @@ fn empire_candidates(view: &PlayerView) -> Vec<Order> {
     }
     orders
 }
+
+#[cfg(test)]
+#[path = "menu_tests.rs"]
+mod tests;
