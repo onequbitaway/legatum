@@ -23,6 +23,8 @@ There is no HTTP server. The host's own UI reaches the engine through `BrowserHo
 | POST | `/api/load` | Body: a save string. Host's tab only. |
 | POST / DELETE | `/api/staging`, POST `/api/staging/start` | Open, configure or close the staging room; start the game (see Staging room below). Host's tab only. |
 
+A host with no UI of its own (`crates/host`, `legatum-host`) calls `NetHost::issue_seat_credentials` after it creates the game: every human seat gets a fresh credential, which the operator hands to whoever plays the seat. Each player sends `join` with it; no seat is open to `game_take`. It is refused once any seat is connected.
+
 `/api/save` and `/api/archive` no longer exist; the app saves from the engine's own save call. The status never carries the seed or any seat credential.
 
 
