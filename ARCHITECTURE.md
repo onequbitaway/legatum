@@ -33,7 +33,7 @@ Direct dependencies, from the manifests:
 | `sim` | `core`, `ai`, `wasm`, `archive`, `analysis` |
 | `agent` | `core`, `wasm` |
 | `host` | `core`, `wasm`, `agent` |
-| `arena` | none (workspace crates) |
+| `arena` | `core`, `wasm`, `agent` |
 
 Notes:
 

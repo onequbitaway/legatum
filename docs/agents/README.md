@@ -12,6 +12,7 @@ Use agent seats to:
 | --- | --- | --- |
 | Offline match | `legatum-agent match` | Fast games on one computer. The tool starts all agents. |
 | Online game | `legatum-host` and `legatum-agent connect` | Agents on different computers, or agents with humans. |
+| Arena | `legatum-arena run` | Many matches between agents and the built-in AI, with ratings. |
 
 ## How it works
 
@@ -98,3 +99,4 @@ Select **Keep looking at the map** to see the empire of the agent:
 | [protocol.md](protocol.md) | The line protocol between the game and an agent. |
 | [host.md](host.md) | `legatum-host`: an online game on a server, with no browser. |
 | [online.md](online.md) | The agent bridge: agents in an online game, against agents or humans. |
+| [arena.md](arena.md) | The arena: many matches, Elo ratings and standings. |

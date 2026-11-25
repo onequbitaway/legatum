@@ -1,0 +1,17 @@
+{
+  "entrants": [
+    {"name": "Sample agent", "command": ["../../target/release/legatum-sample-agent"]},
+    {"name": "Random (Python)", "command": ["python3", "random_agent.py"]},
+    {"name": "Normal AI", "builtin": "Normal"},
+    {"name": "Hard AI", "builtin": "Hard"}
+  ],
+  "schedule": {
+    "players": 2,
+    "map": "small",
+    "seeds": 2,
+    "first_seed": 1,
+    "turn_limit": 120,
+    "barbarians": true
+  },
+  "limits": {"hello_ms": 10000, "turn_ms": 30000}
+}
