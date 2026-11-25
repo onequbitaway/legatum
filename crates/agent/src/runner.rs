@@ -359,7 +359,8 @@ fn result_of(state: &GameState, turns: u32) -> MatchResult {
         .unwrap_or(legatum_core::data::DEFAULT_TURN_LIMIT);
     let reason = if !state.finished {
         EndReason::Stopped
-    } else if state.turn >= limit {
+    } else if state.turn.saturating_sub(1) >= limit {
+        // The game ends when the resolved turn reaches the limit; `state.turn` is the next one.
         EndReason::TurnLimit
     } else {
         EndReason::Victory
