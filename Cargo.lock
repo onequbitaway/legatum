@@ -360,6 +360,7 @@ dependencies = [
 name = "legatum-agent"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "legatum-core",
  "legatum-wasm",
  "serde",

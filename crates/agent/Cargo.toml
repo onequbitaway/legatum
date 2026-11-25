@@ -11,4 +11,5 @@ repository.workspace = true
 legatum-core.workspace = true
 legatum-wasm = { path = "../wasm" }
 serde.workspace = true
+clap.workspace = true
 serde_json.workspace = true
