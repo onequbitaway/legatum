@@ -9,7 +9,11 @@ Dependencies are taken from each crate's `Cargo.toml`. An arrow means "depends o
 ```
   hosts            app (WASM in the browser)       crates/sim   crates/analysis
                             |                           |              |
-                            v                           v              v
+  agent seats               |   crates/host  crates/arena              |
+                            |         \        /        |              |
+                            |        crates/agent       |              |
+                            |              |            |              |
+                            v              v            v              v
   shared loop       crates/wasm  (Session, saves, tapes, position loading)  <- crates/archive
                          |
                          v
@@ -19,7 +23,7 @@ Dependencies are taken from each crate's `Cargo.toml`. An arrow means "depends o
   rules             crates/core  (resolve_turn, views, data; no I/O)
 ```
 
-Every host also links `crates/core` directly for types. `crates/archive` and `crates/analysis` sit beside the session layer and read its recording format.
+Every host also links `crates/core` directly for types. `crates/agent` (agent seats), `crates/host` (the native online host) and `crates/arena` (agent tournaments) all drive the same `Session` or `NetHost` from `crates/wasm`. `crates/archive` and `crates/analysis` sit beside the session layer and read its recording format.
 
 Direct dependencies, from the manifests:
 
@@ -117,6 +121,22 @@ The game state lives in a Zustand store (`app/src/store.ts`); the map is drawn o
 **Game uploads.** The hosted web build (`scripts/build-web.sh` with `LEGATUM_GAMES_URL`) uploads each game's recording after each of the first five turns, then every five turns, and at the end (`app/src/platform/gameUpload.ts`, called from `deliver()` in `archive.ts`). The engine's `Recording::anonymized` (exposed as `Game::public_archive` in `crates/wasm/src/lib.rs`) renames every seat to its default and replays the orders to recompute the hashes; the `infra/games` Worker stores the file in a private R2 bucket and refuses any other seat name. Other builds upload nothing.
 
 **Online relay.** Online play (`plans/online-play.md`) adds no game code. The host's tab dials out to a Cloudflare Worker (`infra/relay`: a `Lobby` Durable Object listing rooms and one `Room` Durable Object per game) over a WebSocket tunnel (`app/src/net/tunnel.ts`). The relay pipes frames between the host's tunnel and up to 8 guests and parses none of the game messages; the host stays authoritative. Closing the host's tab ends the game; reloading it resumes from the save. Guests need the same version. The lobby screen is `app/src/screens/OnlineLobbyScreen.tsx` (`app/src/platform/relayLobby.ts`).
+
+## Agent seats
+
+An agent seat is a seat that an outside program plays (`docs/agents/`). To the engine it is a human seat: the program gets that seat's `PlayerView` and nothing else, and its orders are validated and resolved like anyone's. Programs never link the engine; they speak a line protocol over standard input and output (`crates/agent/src/protocol.rs`).
+
+| Part | Where | Role |
+| --- | --- | --- |
+| Order menu | `crates/core/src/menu.rs` | The single orders a seat may give this turn, built from its view and each checked by `validate_orders`, so programs pick from a list. Online, a seat asks the host for it (`menu`). |
+| Agent process | `crates/agent/src/process.rs` | Starts a program with no shell and waits a bounded time for each line; late, bad or oversized answers cost only that seat its orders. |
+| Ready helpers | `crates/agent/src/assist.rs` | The app's Ready-time exploration and city automation, applied to each answer, so a program can delegate as a human does. |
+| Offline runner | `crates/agent/src/runner.rs` | One `Session` with agent seats marked human; asks all agents at once each turn and records a report, a save and a tape. |
+| Bridge | `crates/agent/src/bridge.rs` | A normal player client to any online host and the game to the program. |
+| Native host | `crates/host` | `NetHost` behind a WebSocket server, with issued credentials and an optional turn clock. |
+| Arena | `crates/arena` | Fixtures, parallel matches, Elo ratings applied in schedule order, and a static HTML report. |
+
+Agent orders enter tapes like human orders, so a game with agents replays exactly even though the programs themselves need not be deterministic.
 
 ## Save files and versioning
 
