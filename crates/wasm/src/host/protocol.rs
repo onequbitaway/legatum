@@ -127,6 +127,10 @@ pub(crate) enum ServerMessage {
         /// before pings looks the same as one that has them switched off.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         map_pings: bool,
+        /// Seconds each planning turn lasts before the host resolves it without waiting for
+        /// Ready. Omitted when the host waits for Ready.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        turn_seconds: Option<u32>,
     },
     SeatToken {
         seat: usize,

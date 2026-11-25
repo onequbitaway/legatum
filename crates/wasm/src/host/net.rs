@@ -49,6 +49,8 @@ pub struct NetHost {
     links: BTreeMap<ConnectionId, Link>,
     /// Connections ended by `tick`, reported by the next `drain`.
     closed: Vec<ConnectionId>,
+    /// The turn clock in milliseconds, and the planning turn it runs for with the time it began.
+    clock: Option<(f64, Option<(u32, f64)>)>,
 }
 
 impl NetHost {
@@ -63,6 +65,7 @@ impl NetHost {
             host: guarded(|| Host::new(save, checkpoint_turns))?,
             links: BTreeMap::new(),
             closed: Vec::new(),
+            clock: None,
         })
     }
 
@@ -84,6 +87,58 @@ impl NetHost {
             },
         );
         Ok(id)
+    }
+
+    /// Resolves each planning turn `seconds` after it began, Ready or not (`None`: wait for
+    /// Ready, the default). A turn begins when the host first sees it after the call. Each
+    /// `welcome` tells the seat the number of seconds. Any value of 1 or more is accepted.
+    pub fn set_turn_clock(&mut self, seconds: Option<u32>) -> Result<(), String> {
+        if seconds == Some(0) {
+            return Err("a turn clock needs at least 1 second".into());
+        }
+        self.clock = seconds.map(|s| (f64::from(s) * 1000.0, None));
+        self.host.turn_seconds = seconds;
+        Ok(())
+    }
+
+    /// Starts the clock for a new planning turn, and resolves the turn when its time is up. When
+    /// no seat is connected the turn cannot resolve; it then gets a full period again.
+    fn run_clock(&mut self, now: f64) {
+        let Some((limit, running)) = self.clock else {
+            return;
+        };
+        if let (Some(turn), Some((t, began))) = (self.host.turn(), running)
+            && t == turn
+            && now - began >= limit
+        {
+            let _ = guarded(|| {
+                self.host.resolve_on_time();
+                Ok(())
+            });
+            self.set_clock_start(now, true);
+        } else {
+            self.set_clock_start(now, false);
+        }
+    }
+
+    /// Notes when the live game's planning turn began: now, if the turn is new to the clock or
+    /// `again` is set.
+    fn set_clock_start(&mut self, now: f64, again: bool) {
+        let Some((_, running)) = &mut self.clock else {
+            return;
+        };
+        *running = match self.host.turn() {
+            None => None,
+            Some(turn) if again || running.is_none_or(|(t, _)| t != turn) => Some((turn, now)),
+            Some(_) => *running,
+        };
+    }
+
+    /// Forgets when the turn began: the next call starts a full period.
+    fn reset_clock(&mut self) {
+        if let Some((_, running)) = &mut self.clock {
+            *running = None;
+        }
     }
 
     /// One text message from a connection. A bad message is answered with an `error`.
@@ -109,6 +164,7 @@ impl NetHost {
                 },
             );
         }
+        self.set_clock_start(now, false);
     }
 
     /// The transport lost the connection.
@@ -121,8 +177,10 @@ impl NetHost {
         }
     }
 
-    /// Ends connections past their join deadline or silent for too long.
+    /// Ends connections past their join deadline or silent for too long, and runs the turn
+    /// clock.
     pub fn tick(&mut self, now: f64) {
+        self.run_clock(now);
         self.track_admission(now);
         let expired: Vec<_> = self
             .links
@@ -204,11 +262,13 @@ impl NetHost {
 
     /// Starts a game from a setup (humans first). Everyone connected must rejoin.
     pub fn new_game(&mut self, setup_json: &str) -> Result<(), String> {
+        self.reset_clock();
         guarded(|| self.host.new_game(crate::json::parse_setup(setup_json)?))
     }
 
     /// Loads an opaque save string as the online game.
     pub fn load_game(&mut self, save: &str) -> Result<(), String> {
+        self.reset_clock();
         guarded(|| self.host.load_game(save))
     }
 

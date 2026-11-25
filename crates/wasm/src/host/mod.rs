@@ -263,6 +263,9 @@ pub(crate) struct Host {
     /// The host's join code, upper-cased. Lives only here: never in a status, summary, view, save,
     /// history or message, and never sent to the relay.
     join_code: Option<String>,
+    /// Seconds each planning turn may last before the host resolves it without waiting for
+    /// Ready (`net::NetHost::set_turn_clock`). None: the host waits for Ready, as before.
+    turn_seconds: Option<u32>,
 }
 
 impl Host {
@@ -296,6 +299,7 @@ impl Host {
             save: None,
             recordings: Vec::new(),
             join_code: None,
+            turn_seconds: None,
         };
         host.checkpoint();
         Ok(host)
@@ -816,6 +820,7 @@ impl Host {
                 game_id: game.id.clone(),
                 orders: s.orders.clone(),
                 map_pings: true,
+                turn_seconds: self.turn_seconds,
             };
             let player = s.player;
             let view = ServerMessage::View {
@@ -975,10 +980,30 @@ impl Host {
     }
 
     fn resolve_if_ready(&mut self) {
-        let Some(game) = &mut self.game else { return };
-        if !game.can_resolve() {
-            return;
+        if self.game.as_ref().is_some_and(Game::can_resolve) {
+            self.resolve();
         }
+    }
+
+    /// The planning turn of the live game, if there is one.
+    pub(crate) fn turn(&self) -> Option<u32> {
+        self.game.as_ref().map(|g| g.session.state.turn)
+    }
+
+    /// The turn clock ran out: resolve the planning turn with every seat's pending orders, Ready
+    /// or not, joined or not. Nothing happens to a finished game, or while no seat is connected
+    /// (nobody is playing, so the game waits).
+    pub(crate) fn resolve_on_time(&mut self) {
+        if self.game.as_ref().is_some_and(|g| {
+            !g.session.state.finished && g.seats.iter().any(|s| s.connection.is_some())
+        }) {
+            self.resolve();
+            self.broadcast_seats();
+        }
+    }
+
+    fn resolve(&mut self) {
+        let Some(game) = &mut self.game else { return };
         let before: Vec<_> = game
             .seats
             .iter()
