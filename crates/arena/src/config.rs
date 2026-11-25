@@ -28,7 +28,7 @@ pub struct Entrant {
     /// The program and its arguments, run with no shell. Exactly one of `command` and `builtin`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub command: Option<Vec<String>>,
-    /// The agent's working directory, relative to the arena file.
+    /// The agent's working directory, relative to the arena file's folder (the default).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dir: Option<PathBuf>,
     /// The built-in AI at this level.
@@ -44,14 +44,27 @@ pub enum Play {
 }
 
 impl Entrant {
-    /// How this entrant plays, with `dir` taken relative to `base` (the arena file's folder).
+    /// How this entrant plays. The agent runs in `dir` relative to `base` (the arena file's
+    /// folder), or in `base` itself. A program path with a `/` is taken relative to that folder
+    /// too; a bare name such as `python3` is looked up on the PATH.
     pub fn play(&self, base: &Path) -> Play {
         match (&self.command, self.builtin) {
-            (Some(words), _) => Play::Agent(AgentCommand {
-                program: words[0].clone(),
-                args: words[1..].to_vec(),
-                dir: self.dir.as_ref().map(|d| base.join(d)),
-            }),
+            (Some(words), _) => {
+                let dir = self
+                    .dir
+                    .as_ref()
+                    .map_or_else(|| base.to_owned(), |d| base.join(d));
+                let program = if words[0].contains('/') && Path::new(&words[0]).is_relative() {
+                    dir.join(&words[0]).to_string_lossy().into_owned()
+                } else {
+                    words[0].clone()
+                };
+                Play::Agent(AgentCommand {
+                    program,
+                    args: words[1..].to_vec(),
+                    dir: Some(dir),
+                })
+            }
             (None, Some(level)) => Play::Builtin(level),
             (None, None) => unreachable!("checked by ArenaConfig::check"),
         }
@@ -151,7 +164,8 @@ mod tests {
         let config = parse(
             r#"{"entrants": [
                 {"name": "Mine", "command": ["python3", "agent.py"], "dir": "agents"},
-                {"name": "Hard AI", "builtin": "Hard"}
+                {"name": "Hard AI", "builtin": "Hard"},
+                {"name": "Built", "command": ["./bin/agent", "--fast"]}
             ]}"#,
         )
         .unwrap();
@@ -166,6 +180,11 @@ mod tests {
             config.entrants[1].play(Path::new("/arena")),
             Play::Builtin(AiDifficulty::Hard)
         );
+        let Play::Agent(built) = config.entrants[2].play(Path::new("/arena")) else {
+            panic!("an agent");
+        };
+        assert_eq!(built.program, "/arena/./bin/agent");
+        assert_eq!(built.dir, Some(PathBuf::from("/arena")));
     }
 
     #[test]
