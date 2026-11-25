@@ -407,6 +407,7 @@ dependencies = [
  "serde",
  "serde_json",
  "time",
+ "tungstenite",
 ]
 
 [[package]]

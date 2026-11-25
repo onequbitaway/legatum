@@ -13,5 +13,6 @@ legatum-ai.workspace = true
 legatum-wasm = { path = "../wasm" }
 serde.workspace = true
 clap.workspace = true
+tungstenite = "0.30"
 serde_json.workspace = true
 time = { version = "0.3", features = ["formatting"] }

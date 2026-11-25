@@ -7,6 +7,7 @@
 //! information. The guide for agent authors is `docs/agents/`.
 
 pub mod assist;
+pub mod bridge;
 pub mod process;
 pub mod protocol;
 pub mod runner;
