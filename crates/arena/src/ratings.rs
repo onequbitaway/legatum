@@ -107,3 +107,97 @@ impl Ratings {
         rows
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn at(places: &[(&str, u32)]) -> Vec<Placement> {
+        places
+            .iter()
+            .map(|(entrant, place)| Placement {
+                entrant: (*entrant).into(),
+                place: *place,
+            })
+            .collect()
+    }
+
+    fn total(ratings: &Ratings) -> f64 {
+        ratings.entrants.values().map(|r| r.elo).sum()
+    }
+
+    #[test]
+    fn equal_players_expect_half_and_a_stronger_one_more() {
+        assert!((expected(1500.0, 1500.0) - 0.5).abs() < 1e-12);
+        assert!((expected(1900.0, 1500.0) - 0.909).abs() < 0.001);
+        assert!((expected(1500.0, 1900.0) + expected(1900.0, 1500.0) - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn a_win_between_equals_moves_half_of_k_each_way() {
+        let mut ratings = Ratings::default();
+        ratings.apply(&at(&[("a", 1), ("b", 2)]));
+        assert!((ratings.entrants["a"].elo - (START + K / 2.0)).abs() < 1e-9);
+        assert!((ratings.entrants["b"].elo - (START - K / 2.0)).abs() < 1e-9);
+        assert_eq!(ratings.entrants["a"].wins, 1);
+        assert_eq!(ratings.entrants["b"].losses, 1);
+    }
+
+    #[test]
+    fn a_draw_between_equals_changes_no_rating() {
+        let mut ratings = Ratings::default();
+        ratings.apply(&at(&[("a", 1), ("b", 1)]));
+        assert_eq!(ratings.entrants["a"].elo, START);
+        assert_eq!(ratings.entrants["a"].draws, 1);
+        assert_eq!(ratings.entrants["b"].draws, 1);
+    }
+
+    #[test]
+    fn the_total_never_changes_and_one_match_moves_a_rating_by_at_most_k() {
+        let mut ratings = Ratings::default();
+        let matches = [
+            at(&[("a", 1), ("b", 2), ("c", 3), ("d", 4)]),
+            at(&[("d", 1), ("a", 2), ("b", 2), ("c", 4)]),
+            at(&[("c", 1), ("a", 2)]),
+        ];
+        for placements in &matches {
+            let before = ratings.clone();
+            ratings.apply(placements);
+            assert!((total(&ratings) - START * ratings.entrants.len() as f64).abs() < 1e-9);
+            for p in placements {
+                let old = before.entrants.get(&p.entrant).map_or(START, |r| r.elo);
+                assert!((ratings.entrants[&p.entrant].elo - old).abs() <= K + 1e-9);
+            }
+        }
+    }
+
+    #[test]
+    fn beating_a_stronger_player_gains_more_than_beating_a_weaker_one() {
+        let mut ratings = Ratings::default();
+        for _ in 0..10 {
+            ratings.apply(&at(&[("strong", 1), ("weak", 2)]));
+        }
+        let mut upset = ratings.clone();
+        upset.apply(&at(&[("new", 1), ("strong", 2)]));
+        let mut expected_win = ratings.clone();
+        expected_win.apply(&at(&[("new", 1), ("weak", 2)]));
+        assert!(upset.entrants["new"].elo > expected_win.entrants["new"].elo);
+    }
+
+    #[test]
+    fn two_seats_of_one_entrant_do_not_rate_each_other() {
+        let mut ratings = Ratings::default();
+        ratings.apply(&at(&[("a", 1), ("a", 2)]));
+        assert_eq!(ratings.entrants["a"].elo, START);
+        assert_eq!(ratings.entrants["a"].matches, 2);
+    }
+
+    #[test]
+    fn the_table_is_best_first_and_names_break_ties() {
+        let mut ratings = Ratings::default();
+        ratings.apply(&at(&[("b", 1), ("a", 2)]));
+        ratings.apply(&at(&[("c", 1), ("d", 1)]));
+        let names: Vec<_> = ratings.table().iter().map(|(n, _)| *n).collect();
+        assert_eq!(names, ["b", "c", "d", "a"]);
+    }
+}
