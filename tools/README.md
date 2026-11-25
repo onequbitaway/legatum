@@ -4,6 +4,7 @@ Helper programs around the engine. Everything here is optional for building and 
 
 | Directory | What it does | Invoked by | Status |
 | --- | --- | --- | --- |
+| `tools/agents/` | Example agents for agent seats (`docs/agents/`): `random_agent.py` plays random orders from the order menu, with no dependencies. | `crates/agent/tests/sample_agents.rs`, `docs/agents/README.md` | active |
 | `tools/ai-plan/` | Builds the local AI-war plan dashboard HTML from `plans/ai-war-status.json`. | `plans/ai-war.md`, the legatum-workflow skill | active |
 | `tools/ai-quality/` | Charts, climb targets and gate scripts for measuring AI quality. | `crates/sim/examples/milestone_suite.rs`, AI fixtures READMEs, the legatum-workflow skill | active |
 | `tools/analysis/` | Balance probes and strategy-diversity analysis of sim reports. | `tools/cloud/merge.py`, docs (`strategy-diversity.md`, `ai-analysis.md`), `crates/sim` telemetry | active |
