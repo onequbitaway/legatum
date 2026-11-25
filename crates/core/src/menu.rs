@@ -18,6 +18,7 @@ use crate::state::GameState;
 use crate::types::{CityBuildFocus, CityId, PlayerId, TeamId, UnitId, UnitKind};
 use crate::view::{PlayerView, UnitView, player_view};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 
 /// Every listed order is valid on its own for `player` on planning turn `turn`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -132,16 +133,65 @@ pub fn order_menu(state: &GameState, player: PlayerId) -> OrderMenu {
 }
 
 /// Keeps the candidates `validate_orders` accepts alone, per actor and in order.
+///
+/// Each check builds the seat's view, so unit orders that use no shared budget are checked in
+/// rounds: round `k` holds the `k`-th candidate of every unit, when that candidate is such an
+/// order. An order a round accepts is valid alone too. An order a round refuses is checked again
+/// alone, and so is every other order. Checking in rounds halves the time of a late turn's menu.
 fn keep_valid(state: &GameState, player: PlayerId, candidates: Vec<Vec<Order>>) -> Vec<Vec<Order>> {
+    let alone =
+        |order: &Order| validate_orders(state, player, std::slice::from_ref(order)).is_empty();
+    let mut accepted = BTreeSet::new();
+    let rounds = candidates.iter().map(Vec::len).max().unwrap_or(0);
+    for round in 0..rounds {
+        let batch: Vec<(usize, &Order)> = candidates
+            .iter()
+            .enumerate()
+            .filter_map(|(actor, c)| c.get(round).map(|o| (actor, o)))
+            .filter(|(_, o)| batchable(o))
+            .collect();
+        if batch.is_empty() {
+            continue;
+        }
+        let orders: Vec<Order> = batch.iter().map(|(_, o)| (*o).clone()).collect();
+        let refused: BTreeSet<usize> = validate_orders(state, player, &orders)
+            .into_iter()
+            .map(|e| e.index)
+            .collect();
+        for (i, (actor, order)) in batch.into_iter().enumerate() {
+            if !refused.contains(&i) || alone(order) {
+                accepted.insert((actor, round));
+            }
+        }
+    }
     candidates
         .into_iter()
-        .map(|orders| {
+        .enumerate()
+        .map(|(actor, orders)| {
             orders
                 .into_iter()
-                .filter(|o| validate_orders(state, player, std::slice::from_ref(o)).is_empty())
+                .enumerate()
+                .filter_map(|(round, order)| {
+                    (accepted.contains(&(actor, round)) || (!batchable(&order) && alone(&order)))
+                        .then_some(order)
+                })
                 .collect()
         })
         .collect()
+}
+
+/// Unit orders that touch no budget shared with another unit, so a round of them is checked
+/// together. City orders are not batched: a city that changes its build frees or takes strategic
+/// supply another city's choice needs.
+fn batchable(order: &Order) -> bool {
+    matches!(
+        order,
+        Order::SkipUnit { .. }
+            | Order::SleepUnit { .. }
+            | Order::FoundCity { .. }
+            | Order::MoveUnit { .. }
+            | Order::RangedAttack { .. }
+    )
 }
 
 /// Standing orders, founding, moves to every explored tile the unit could reach on open ground

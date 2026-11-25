@@ -1,4 +1,6 @@
-use super::{OrderMenu, order_menu};
+use super::{
+    OrderMenu, city_candidates, empire_candidates, keep_valid, order_menu, unit_candidates,
+};
 use crate::orders::Order;
 use crate::state::{GameSetup, GameState};
 use crate::types::{Faction, PlayerId};
@@ -131,4 +133,35 @@ fn the_menu_survives_a_json_round_trip() {
     let back: OrderMenu = serde_json::from_str(&json).unwrap();
     assert_eq!(back, menu);
     assert_eq!(back.len(), menu.len());
+}
+
+#[test]
+fn checks_in_rounds_keep_exactly_the_orders_valid_alone() {
+    let state = played(12);
+    let player = PlayerId(0);
+    let view = player_view(&state, player);
+    let candidates: Vec<Vec<Order>> = view
+        .units
+        .iter()
+        .filter(|u| u.owner == player)
+        .map(|u| unit_candidates(&view, u))
+        .chain(
+            view.cities
+                .iter()
+                .filter(|c| c.owner == player)
+                .map(|c| city_candidates(&view, c.id)),
+        )
+        .chain([empire_candidates(&view)])
+        .collect();
+    let alone: Vec<Vec<Order>> = candidates
+        .iter()
+        .map(|orders| {
+            orders
+                .iter()
+                .filter(|o| validate_orders(&state, player, std::slice::from_ref(*o)).is_empty())
+                .cloned()
+                .collect()
+        })
+        .collect();
+    assert_eq!(keep_valid(&state, player, candidates), alone);
 }
