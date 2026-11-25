@@ -1850,6 +1850,65 @@ mod tests {
         assert_eq!(pings(&rb).len(), 1);
     }
 
+    fn menus(receiver: &outbox::Receiver) -> Vec<Value> {
+        drain(receiver)
+            .into_iter()
+            .filter(|m| m["type"] == "menu")
+            .collect()
+    }
+
+    fn ask_menu(id: i64) -> ClientMessage {
+        ClientMessage::Menu {
+            req_id: serde_json::json!(id),
+        }
+    }
+
+    #[test]
+    fn a_seat_gets_its_own_order_menu_and_nothing_changes() {
+        let (mut host, [(_a, _ra), (b, rb), (_c, _rc)]) = ping_host();
+        let game = host.game.as_ref().unwrap();
+        let (hash, save) = (game.session.state.hash(), game.session.save_json());
+        host.message(b, ask_menu(41)).unwrap();
+        let got = menus(&rb);
+        assert_eq!(got.len(), 1);
+        assert_eq!(got[0]["req_id"], 41);
+        let menu: legatum_core::OrderMenu = serde_json::from_value(got[0]["menu"].clone()).unwrap();
+        let game = host.game.as_ref().unwrap();
+        assert_eq!(
+            menu,
+            legatum_core::order_menu(&game.session.state, PlayerId(1))
+        );
+        assert!(!menu.is_empty());
+        assert_eq!(game.session.state.hash(), hash);
+        assert_eq!(game.session.save_json(), save);
+    }
+
+    #[test]
+    fn a_connection_without_a_seat_gets_no_menu() {
+        let (mut host, _peers) = ping_host();
+        let (stranger, receiver) = peer(&mut host);
+        assert!(host.message(stranger, ask_menu(1)).is_err());
+        assert!(menus(&receiver).is_empty());
+    }
+
+    #[test]
+    fn a_seat_has_a_menu_budget_per_turn() {
+        let (mut host, [(a, ra), (_b, _rb), (_c, _rc)]) = ping_host();
+        for i in 0..MAX_MENUS_PER_TURN {
+            host.message(a, ask_menu(i.into())).unwrap();
+            let _ = ra.drain();
+        }
+        let error = host.message(a, ask_menu(99)).unwrap_err();
+        assert!(error.contains("order menus per turn"), "{error}");
+        assert!(menus(&ra).is_empty());
+        for seat in 0..3 {
+            host.game.as_mut().unwrap().seats[seat].ready = true;
+        }
+        host.resolve_if_ready();
+        host.message(a, ask_menu(100)).unwrap();
+        assert_eq!(menus(&ra).len(), 1);
+    }
+
     #[test]
     fn a_connection_without_a_seat_cannot_ping() {
         let (mut host, _peers) = ping_host();
