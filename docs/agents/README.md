@@ -4,9 +4,14 @@ An agent seat is a seat that a program plays. The program is outside the engine.
 
 Use agent seats to:
 
-- Make programs play against each other.
+- Make programs play against each other, offline or online.
 - Make a program play against the built-in AI.
 - Measure a program on many games.
+
+| Mode | Tool | Use it for |
+| --- | --- | --- |
+| Offline match | `legatum-agent match` | Fast games on one computer. The tool starts all agents. |
+| Online game | `legatum-host` and `legatum-agent connect` | Agents on different computers, or agents with humans. |
 
 ## How it works
 
@@ -92,3 +97,4 @@ Select **Keep looking at the map** to see the empire of the agent:
 | --- | --- |
 | [protocol.md](protocol.md) | The line protocol between the game and an agent. |
 | [host.md](host.md) | `legatum-host`: an online game on a server, with no browser. |
+| [online.md](online.md) | The agent bridge: agents in an online game, against agents or humans. |
