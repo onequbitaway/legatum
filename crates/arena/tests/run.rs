@@ -123,3 +123,23 @@ fn a_torn_last_line_is_skipped_and_its_fixture_is_played_again() {
     );
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+#[test]
+fn the_report_has_an_index_and_one_page_per_match() {
+    let dir = scratch("report");
+    let config = config();
+    let records = run(&config, Path::new("."), &dir, 3, |_, _, _| {}).unwrap();
+    let index = legatum_arena::report::write_report(&config, &records, &dir).unwrap();
+    let html = std::fs::read_to_string(&index).unwrap();
+    assert!(html.contains("6 of 6 matches played"));
+    for name in ["Echo A", "Echo B", "Easy AI"] {
+        assert!(html.contains(name), "{name}");
+    }
+    for i in 0..6 {
+        let page = dir.join("report").join(format!("match-{i:04}.html"));
+        let page = std::fs::read_to_string(page).unwrap();
+        assert!(page.contains("Victory points by turn"));
+        assert!(page.contains("../games/"));
+    }
+    std::fs::remove_dir_all(&dir).unwrap();
+}
