@@ -1819,3 +1819,102 @@ fn host_save_file_resumes_on_a_fresh_browser_and_loads_solo() {
     let solo = legatum_wasm::Game::from_save_json(&file);
     assert!(solo.is_ok(), "an online save is a normal engine save");
 }
+
+#[test]
+fn without_a_turn_clock_the_host_waits_for_ready_however_long() {
+    let root = Disk::new();
+    let server = Running::start(&root);
+    server.create(&setup());
+    let (mut a, _) = server.join(0);
+    let (_b, _) = server.join(1);
+    for _ in 0..20 {
+        server.advance(60_000.0);
+    }
+    assert_eq!(server.status()["turn"], 1);
+    a.ready(true);
+    assert_eq!(server.status()["turn"], 1, "seat 1 is not Ready");
+}
+
+#[test]
+fn the_turn_clock_resolves_a_turn_on_time_with_pending_orders() {
+    let root = Disk::new();
+    let server = Running::start(&root);
+    server.create(&setup());
+    server.admin(|host| host.set_turn_clock(Some(30))).ok_json();
+    server.advance(1_000.0);
+    let mut a = server.peer();
+    a.send(json!({"type": "game_take", "seat": 0}));
+    let token = a.until("seat_token")["token"].as_str().unwrap().to_owned();
+    a.send(json!({"type": "join", "seat": 0, "name": "Clocked", "token": token}));
+    assert_eq!(a.until("welcome")["turn_seconds"], 30);
+    let view: PlayerView = serde_json::from_value(a.until("view")["view"].clone()).unwrap();
+    assert_eq!(a.orders(&human_orders(&view))["errors"], json!([]));
+    // Seat 1 never joins and seat 0 is never Ready: only the clock can end the turn. The clock
+    // began at the first tick after it was set, at 1 s.
+    server.advance(29_000.0);
+    assert_eq!(server.status()["turn"], 1);
+    server.advance(1_000.0);
+    a.turn(2, 0);
+    let state = game_json::parse_state(&server.save()).unwrap();
+    let player = state.player(PlayerId(0));
+    assert!(
+        player.researching == Some(TechId::BronzeWorking)
+            || player.techs.contains(&TechId::BronzeWorking),
+        "seat 0's orders were played"
+    );
+    // The next turn gets a full period from the moment it began.
+    server.advance(29_000.0);
+    assert_eq!(server.status()["turn"], 2);
+    server.advance(1_000.0);
+    a.turn(3, 0);
+}
+
+#[test]
+fn ready_still_ends_a_clocked_turn_early_and_restarts_the_clock() {
+    let root = Disk::new();
+    let server = Running::start(&root);
+    server.create(&setup());
+    server.admin(|host| host.set_turn_clock(Some(20))).ok_json();
+    let (mut a, _) = server.join(0);
+    let (mut b, _) = server.join(1);
+    server.advance(5_000.0);
+    a.ready(true);
+    b.ready(true);
+    a.turn(2, 0);
+    server.advance(19_000.0);
+    assert_eq!(server.status()["turn"], 2);
+    server.advance(1_000.0);
+    a.turn(3, 0);
+}
+
+#[test]
+fn a_clocked_game_waits_while_nobody_is_connected() {
+    let root = Disk::new();
+    let server = Running::start(&root);
+    server.create(&setup());
+    server.admin(|host| host.set_turn_clock(Some(10))).ok_json();
+    for _ in 0..10 {
+        server.advance(10_000.0);
+    }
+    assert_eq!(server.status()["turn"], 1);
+    let (mut a, _) = server.join(0);
+    server.advance(9_000.0);
+    assert_eq!(
+        server.status()["turn"],
+        1,
+        "the turn got a full period again"
+    );
+    server.advance(1_000.0);
+    a.turn(2, 0);
+}
+
+#[test]
+fn a_turn_clock_of_zero_seconds_is_refused() {
+    let root = Disk::new();
+    let server = Running::start(&root);
+    assert_eq!(
+        server.admin(|host| host.set_turn_clock(Some(0))).status(),
+        400
+    );
+    assert_eq!(server.admin(|host| host.set_turn_clock(None)).status(), 200);
+}
