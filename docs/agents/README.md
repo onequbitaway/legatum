@@ -65,6 +65,27 @@ Select **Keep looking at the map** to see the empire of the agent:
 
 ![The same map in a window of 1000 x 600 pixels](media/match-save-map-1000x600.jpg)
 
+## Write an agent
+
+1. Read [protocol.md](protocol.md).
+2. Start from a sample agent:
+
+   | Sample | Language | What it does |
+   | --- | --- | --- |
+   | `crates/agent/src/bin/legatum-sample-agent.rs` | Rust | Explores, delegates city builds, founds cities, fights what it can reach, accepts Peace. |
+   | `tools/agents/random_agent.py` | Python 3, no packages | Plays random orders from the order menu. |
+
+3. Play your agent against a sample agent:
+
+   ```sh
+   cargo build --release -p legatum-agent
+   target/release/legatum-agent match --agent 0="python3 my_agent.py" --agent 1=target/release/legatum-sample-agent
+   ```
+
+4. Read `report.json`. Make sure that your agent has no late replies, no errors and few refused orders.
+
+> **Note:** Write log text to standard error, not to standard output. The game reads only JSON lines on standard output. The report keeps the last 20 lines of standard error.
+
 ## Documents
 
 | Document | Content |
