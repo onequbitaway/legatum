@@ -204,7 +204,7 @@ fn match_page(config: &ArenaConfig, index: usize, record: &MatchRecord) -> Strin
     html.push_str(&line_chart(&series, "Turn", "VP", true));
     let _ = write!(
         html,
-        "<p class=\"note\">Save of the last turn: <a href=\"../{0}\"><code>{0}</code></a>. Open it in the game with <b>Load game</b> to see the map.</p>",
+        "<p class=\"note\">Save of the last turn: <a href=\"../{0}\"><code>{0}</code></a>. Open it in the game with <b>Load Game</b> to see the map; a match with two or more agent seats opens as an online game to host.</p>",
         escape(&record.save)
     );
     page(&format!("Legatum arena: match {}", index + 1), &html)
