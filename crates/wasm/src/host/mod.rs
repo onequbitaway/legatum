@@ -45,6 +45,14 @@ fn now_nanos() -> u128 {
     }
 }
 
+/// A seat's credential as [`net::NetHost::issue_seat_credentials`] hands it out.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct SeatCredential {
+    pub seat: usize,
+    pub player: PlayerId,
+    pub token: String,
+}
+
 /// The relay's lobby row for this host (the tunnel's `summary` frame).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Summary {
@@ -423,6 +431,35 @@ impl Host {
             }
             self.broadcast_seats();
         }
+    }
+
+    /// Gives every human seat a fresh credential and returns them, for a host with no UI of its
+    /// own (`crates/host`): it hands each credential to the program or person that plays the
+    /// seat, who sends `join` with it. Old credentials stop working, and nobody can `game_take`
+    /// a seat. Refused while any seat is connected, so nobody loses a seat by it.
+    pub(crate) fn issue_seat_credentials(&mut self) -> Result<Vec<SeatCredential>, String> {
+        let game = self.game.as_mut().ok_or("No game in progress")?;
+        if game.seats.iter().any(|s| s.connection.is_some()) {
+            return Err("Seats are connected; issue credentials before anyone joins.".into());
+        }
+        let credentials = game
+            .seats
+            .iter_mut()
+            .enumerate()
+            .map(|(seat, s)| {
+                let token = credentials::token()?;
+                s.token = Some(token.clone());
+                s.ready = false;
+                s.orders.clear();
+                Ok(SeatCredential {
+                    seat,
+                    player: s.player,
+                    token,
+                })
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+        self.broadcast_seats();
+        Ok(credentials)
     }
 
     /// The live game's save, once per change, for the browser to keep.

@@ -263,6 +263,12 @@ impl NetHost {
         self.host.open_guest_seats();
     }
 
+    /// A fresh credential for every human seat, for a host with no UI of its own. See
+    /// [`super::SeatCredential`]; call it before anyone joins.
+    pub fn issue_seat_credentials(&mut self) -> Result<Vec<super::SeatCredential>, String> {
+        guarded(|| self.host.issue_seat_credentials())
+    }
+
     /// The live game's save, for the host's own copy on demand.
     pub fn save_game(&self) -> Result<String, String> {
         self.host.save_game()
