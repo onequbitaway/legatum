@@ -184,3 +184,34 @@ fn the_host_stops_once_the_game_is_finished() {
     let outcome = running.finish();
     assert!(outcome.finished);
 }
+
+#[test]
+fn the_autosave_is_an_app_save_file() {
+    let dir = std::env::temp_dir().join(format!("legatum-host-save-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let mut setup = MatchSetup::default().to_game_setup().unwrap();
+    setup.players[0].is_human = true;
+    setup.players[1].is_human = true;
+    let stop = Arc::new(AtomicBool::new(false));
+    let options = ServeOptions {
+        setup,
+        turn_seconds: None,
+        save_dir: Some(dir.clone()),
+        exit_when_finished: false,
+        stop: Arc::clone(&stop),
+    };
+    let host = thread::spawn(move || serve(listener, options, |_| {}));
+    let path = dir.join("game.legatum");
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while !path.is_file() && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(50));
+    }
+    stop.store(true, Ordering::SeqCst);
+    host.join().unwrap().unwrap();
+    let file: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    assert_eq!(file["format"], "legatum-save");
+    assert_eq!(file["online"], true);
+    assert!(file["game"].as_str().unwrap().starts_with('{'));
+    std::fs::remove_dir_all(&dir).unwrap();
+}

@@ -37,7 +37,7 @@ target/release/legatum-host --remote 2 --players 4 --turn-seconds 30 \
 | `--remote N` | Seats 0 to N-1 are played over the network. The built-in AI plays the other seats. |
 | `--turn-seconds S` | The host resolves each turn S seconds after the turn began, also if a seat is not Ready. |
 | `--credentials FILE` | The host writes the credential of each seat to this file. Only you can read the file. |
-| `--save-dir DIR` | The host keeps the autosave (`game.legatum`) and the game history (`history.json`) here. |
+| `--save-dir DIR` | The host keeps the autosave (`game.legatum`, in the app's save format) and the game history (`history.json`) here. To continue a stopped game, open the autosave in the app with **Multiplayer**, then **Host from a save**. |
 | `--exit-when-finished` | The host stops when the game ends. |
 
 Use `--help` to see all options.

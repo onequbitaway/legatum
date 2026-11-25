@@ -170,9 +170,15 @@ fn host_loop(host: &mut NetHost, inbox: &Receiver<Event>, options: &ServeOptions
     }
 }
 
-/// Writes the autosave and the newest game history, when the host has new ones.
+/// Writes the autosave (in the app's save format, so the app can host it again) and the newest
+/// game history, when the host has new ones.
 fn keep_files(host: &mut NetHost, options: &ServeOptions) {
-    let save = host.take_save();
+    let save = host.take_save().map(|game| {
+        legatum_agent::save_file::app_save_file(&game).unwrap_or_else(|e| {
+            eprintln!("legatum-host: keeping the bare engine save: {e}");
+            game
+        })
+    });
     let history = host.take_recordings().pop();
     let Some(dir) = &options.save_dir else {
         return;
