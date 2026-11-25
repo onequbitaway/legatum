@@ -52,7 +52,7 @@ With `--out DIR`, the tool writes three files:
 | File | Content |
 | --- | --- |
 | `report.json` | The result, the VP of each seat after each turn, and how each agent behaved (answers, late answers, errors, refused orders, the last lines of standard error). |
-| `game.legatum` | A save of the last turn. Open it in the game with **Load game** to look at the map. |
+| `game.legatum` | A save of the last turn in the app's save format. If the match has one agent seat, open the save in the game with **Load Game** to look at the map. A save with two or more agent seats has two or more human seats, so the app offers to host it as an online game. |
 | `tape.json` | The orders of each turn. The engine replays it to the same state hashes. |
 
 ## Documents

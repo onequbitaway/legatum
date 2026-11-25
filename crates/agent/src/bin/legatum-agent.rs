@@ -4,6 +4,7 @@ use clap::{Parser, Subcommand};
 use legatum_agent::process::AgentCommand;
 use legatum_agent::protocol::{Limits, SeatKind};
 use legatum_agent::runner::{MatchConfig, MatchReport, run_match};
+use legatum_agent::save_file::app_save_file;
 use legatum_agent::setup::{
     MapSize, MatchSetup, parse_difficulty, parse_faction, parse_seat_value,
 };
@@ -120,7 +121,7 @@ fn play(args: MatchArgs) -> Result<(), String> {
             "report.json",
             serde_json::to_string_pretty(&report).expect("reports serialize"),
         )?;
-        write("game.legatum", session.save_json())?;
+        write("game.legatum", app_save_file(&session.save_json())?)?;
         if let Some(history) = &session.history {
             write("tape.json", history.tape.to_json())?;
         }

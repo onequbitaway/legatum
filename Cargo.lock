@@ -365,6 +365,7 @@ dependencies = [
  "legatum-wasm",
  "serde",
  "serde_json",
+ "time",
 ]
 
 [[package]]
