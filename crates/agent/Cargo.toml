@@ -9,6 +9,7 @@ repository.workspace = true
 
 [dependencies]
 legatum-core.workspace = true
+legatum-ai.workspace = true
 legatum-wasm = { path = "../wasm" }
 serde.workspace = true
 clap.workspace = true

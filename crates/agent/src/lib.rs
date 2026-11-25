@@ -6,6 +6,7 @@
 //! (`legatum_core::order_menu`). It plays under the same rules, with no bonus and no hidden
 //! information. The guide for agent authors is `docs/agents/`.
 
+pub mod assist;
 pub mod process;
 pub mod protocol;
 pub mod runner;
