@@ -5,3 +5,5 @@
 //! in its seat gets: its own `PlayerView`, the events its team saw, and the order menu
 //! (`legatum_core::order_menu`). It plays under the same rules, with no bonus and no hidden
 //! information. The guide for agent authors is `docs/agents/`.
+
+pub mod protocol;
