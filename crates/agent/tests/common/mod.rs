@@ -36,3 +36,22 @@ pub fn sh(script: &str) -> AgentCommand {
         dir: None,
     }
 }
+
+/// Turns on exploration for unit `unit` on turn 1, then answers every turn with no orders.
+pub fn explore_once(unit: u32) -> String {
+    format!(
+        r#"
+while IFS= read -r line; do
+  case "$line" in
+    *'"type":"hello"'*) echo '{{"type":"hello","name":"explorer"}}' ;;
+    *'"type":"turn","turn":1,'*)
+      echo '{{"type":"orders","turn":1,"orders":[{{"type":"SetAutomation","unit":{unit},"automation":"Explore"}}]}}' ;;
+    *'"type":"turn"'*)
+      t=$(printf '%s' "$line" | sed 's/^{{"type":"turn","turn":\([0-9]*\).*/\1/')
+      echo "{{\"type\":\"orders\",\"turn\":$t,\"orders\":[]}}" ;;
+    *'"type":"end"'*) exit 0 ;;
+  esac
+done
+"#
+    )
+}

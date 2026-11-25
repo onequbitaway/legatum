@@ -3,7 +3,7 @@
 
 mod common;
 
-use common::{BAD_ORDER, ECHO, sh};
+use common::{BAD_ORDER, ECHO, explore_once, sh};
 use legatum_agent::process::AgentCommand;
 use legatum_agent::protocol::{EndReason, Limits, SeatKind};
 use legatum_agent::runner::{MatchConfig, run_match};
@@ -107,4 +107,22 @@ fn the_same_agents_and_seed_give_the_same_game() {
             .state_hash()
     };
     assert_eq!(play(), play());
+}
+
+#[test]
+fn an_agent_can_leave_a_scout_exploring() {
+    let config = config(&[(0, sh(ECHO))], 1);
+    let state = legatum_core::new_game(&config.setup);
+    let scout = state
+        .units
+        .values()
+        .find(|u| u.owner == PlayerId(0) && u.kind == legatum_core::UnitKind::Scout)
+        .unwrap();
+    let (start, id) = (scout.pos, scout.id);
+    let mut config = config;
+    config.agents.insert(PlayerId(0), sh(&explore_once(id.0)));
+    config.max_turns = 4;
+    let (report, session) = run_match(config, |_| {}).unwrap();
+    assert_eq!(report.seats[0].agent.as_ref().unwrap().rejected, 0);
+    assert_ne!(session.state.units[&id].pos, start);
 }

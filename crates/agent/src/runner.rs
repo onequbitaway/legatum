@@ -1,7 +1,9 @@
 //! An offline match: one engine session, the built-in AI for some seats and agent processes for
 //! the others. The runner treats an agent seat as a human seat: it sends the seat's view and
-//! order menu, takes the answer, drops refused orders and resolves the turn with everyone else's.
+//! order menu, takes the answer, runs the app's Ready helpers on it (`assist`), drops refused
+//! orders and resolves the turn with everyone else's.
 
+use crate::assist::ready_orders;
 use crate::process::{AgentCommand, AgentError, AgentProcess};
 use crate::protocol::{
     EndReason, GameInfo, Limits, MatchResult, PROTOCOL_VERSION, PlayerInfo, Seat, SeatKind, ToAgent,
@@ -164,6 +166,7 @@ pub fn run_match(
             match answer {
                 Some(Ok(given)) => {
                     agent.report.answered += 1;
+                    let given = ready_orders(&views[&agent.player], given);
                     let (kept, refused) = keep_valid(&session.state, agent.player, given);
                     agent.report.rejected += refused.len() as u32;
                     agent.rejected = refused;
