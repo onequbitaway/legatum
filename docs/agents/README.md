@@ -55,6 +55,16 @@ With `--out DIR`, the tool writes three files:
 | `game.legatum` | A save of the last turn in the app's save format. If the match has one agent seat, open the save in the game with **Load Game** to look at the map. A save with two or more agent seats has two or more human seats, so the app offers to host it as an online game. |
 | `tape.json` | The orders of each turn. The engine replays it to the same state hashes. |
 
+This is the save of an 80-turn match, opened in the game. An agent played the Mongols in seat 0 against three built-in AI seats. The game opens at its end screen:
+
+![The end screen of a match save opened in the game](media/match-save-end-1440x900.jpg)
+
+Select **Keep looking at the map** to see the empire of the agent:
+
+![The map of a match save: the agent's capital, Karakorum, after 80 turns](media/match-save-map-1440x900.jpg)
+
+![The same map in a window of 1000 x 600 pixels](media/match-save-map-1000x600.jpg)
+
 ## Documents
 
 | Document | Content |
