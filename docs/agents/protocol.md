@@ -93,6 +93,15 @@ Send the orders for the turn in the `turn` message. Each order has the same JSON
 
 The game checks the orders. It removes the orders that are not valid and plays the other orders. The next `turn` message lists the removed orders in `rejected`.
 
+### Delegation
+
+The game runs the same helpers on your orders as the app runs when a human presses Ready:
+
+- **Exploration.** Send `{"type":"SetAutomation","unit":7,"automation":"Explore"}` one time. On each turn after that, the game plans the next step of the unit. The unit explores until you give it a different order, or until no unexplored tile is reachable.
+- **City automation.** Send `{"type":"SetCityAutomation","city":3,"focus":"Economy"}` one time. When the city needs a new build, the game selects one for the focus. The focuses are `Military`, `Economy`, `Gold`, `Science` and `Food`. Send `"focus":null` to stop.
+
+The helpers run only on a reply that arrives in time.
+
 ## The order menu
 
 The menu lists single orders that are valid for your seat this turn. The engine makes the menu from your view, and it checks each order alone. Thus the menu tells you nothing that your view does not tell you.
