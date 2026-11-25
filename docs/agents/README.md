@@ -91,3 +91,4 @@ Select **Keep looking at the map** to see the empire of the agent:
 | Document | Content |
 | --- | --- |
 | [protocol.md](protocol.md) | The line protocol between the game and an agent. |
+| [host.md](host.md) | `legatum-host`: an online game on a server, with no browser. |

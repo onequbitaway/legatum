@@ -32,6 +32,7 @@ Direct dependencies, from the manifests:
 | `analysis` | `core`, `wasm`, `archive` |
 | `sim` | `core`, `ai`, `wasm`, `archive`, `analysis` |
 | `agent` | `core`, `wasm` |
+| `host` | `core`, `wasm`, `agent` |
 
 Notes:
 
@@ -109,6 +110,8 @@ The UI depends on one interface, `GameClient` in `app/src/client.ts`. Local game
 The game state lives in a Zustand store (`app/src/store.ts`); the map is drawn on a 2D canvas (`app/src/map/`, entry points `MapCanvas.tsx` and `render.ts`). Test fixtures in `app/src/test/` start from Rust-generated saves and resolve turns through WASM.
 
 **Online host.** Hosting runs in the host's browser tab. `crates/wasm/src/host` is the authoritative game: one `Session`, its staging room, seat credentials and every connected player. It has no transport and does no I/O. `app/src/net/browserHost.ts` feeds it messages and sends what it queues to the relay tunnel or to the host's own UI, and keeps the save and game histories in the browser (IndexedDB). Clients send tagged JSON messages (`crates/wasm/src/host/protocol.rs`: `Join`, `Orders`, `Ready`, `Forecast` and others). When every connected human seat is Ready, the host asks the session for AI orders, steps the turn, saves and queues per-seat views. A seat only ever receives its own view. The host contains no game rules.
+
+**Native host.** `crates/host` (`legatum-host`) runs the same `NetHost` with no browser: one thread owns it, and each WebSocket connection (`GET /ws`, `tungstenite`) has a thread that forwards frames. It issues every human seat's credential before anyone connects (`NetHost::issue_seat_credentials`), can resolve turns on a clock (`NetHost::set_turn_clock`), and keeps the autosave and history in a folder. See `docs/agents/host.md`.
 
 **Game uploads.** The hosted web build (`scripts/build-web.sh` with `LEGATUM_GAMES_URL`) uploads each game's recording after each of the first five turns, then every five turns, and at the end (`app/src/platform/gameUpload.ts`, called from `deliver()` in `archive.ts`). The engine's `Recording::anonymized` (exposed as `Game::public_archive` in `crates/wasm/src/lib.rs`) renames every seat to its default and replays the orders to recompute the hashes; the `infra/games` Worker stores the file in a private R2 bucket and refuses any other seat name. Other builds upload nothing.
 
