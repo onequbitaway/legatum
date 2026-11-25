@@ -12,6 +12,7 @@ flowchart LR
     M --> J[(results.jsonl<br/>games/*.legatum)]
     J --> E[Elo ratings<br/>in schedule order]
     E --> L[leaderboard.json]
+    E --> H[report/index.html<br/>report/match-*.html]
 ```
 
 1. The schedule makes one fixture for each group of entrants, in each seat order, for each seed. In two-player matches, each pair plays two times for each seed, one time in each seat.
@@ -52,6 +53,24 @@ target/release/legatum-arena run --config tools/agents/arena.example.json --out 
 The command plays each fixture that has no result, then shows the standings. If you stop the command, start it again with the same options. It continues with the fixtures that have no result.
 
 To see the standings without a new match, use `legatum-arena table` with the same `--config` and `--out`.
+
+## The report
+
+`legatum-arena run` also writes an HTML report in `report/` in the arena folder. To write it again from the results, use `legatum-arena report` with the same `--config` and `--out`. The report has no script and does not use the network. Open `report/index.html` in a browser.
+
+The index page shows the standings, the rating of each entrant after each match, and a list of all matches:
+
+![The arena index page: standings, rating chart and matches](media/arena-standings-1440x900.png)
+
+Each match page shows the seats, how each agent behaved, the victory points of each seat after each turn, and a link to the save of the last turn:
+
+![An arena match page: seats, agent behaviour and a chart of victory points by turn](media/arena-match-1440x900.png)
+
+The pages also fit a window of 1000 x 600 pixels. Wide tables scroll:
+
+![The arena index page in a window of 1000 x 600 pixels](media/arena-standings-1000x600.png)
+
+![An arena match page in a window of 1000 x 600 pixels](media/arena-match-1000x600.png)
 
 ## Places and ratings
 
