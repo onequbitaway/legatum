@@ -27,6 +27,8 @@ players. Regenerate the per-crate list with `cargo deny list` or `cargo metadata
 | `Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT` | `linux-raw-sys`, `rustix`, `wasip2`, `wit-bindgen` (native targets only) | Used under MIT or Apache-2.0. |
 | `MIT OR Apache-2.0 OR LGPL-2.1-or-later` | `r-efi` (UEFI targets only, never built here) | Used under MIT or Apache-2.0; the LGPL option does not apply. |
 
+The native host `legatum-host` (`crates/host`, added 2026-11-25 after the audit above, and never part of the web build) adds `tungstenite` and the crates it needs: `http`, `httparse`, `sha1`, `rand`, `rand_core`, `chacha20`, `bytes`, `data-encoding`, `log`, `thiserror` and `thiserror-impl`. Each is `MIT OR Apache-2.0` or MIT. None is compiled into the WebAssembly engine.
+
 The Rust standard library, linked into every binary, is `MIT OR Apache-2.0`.
 
 Some crate tarballs (for example `r-efi`) carry no licence file of their own, only the SPDX expression in `Cargo.toml`.
