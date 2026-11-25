@@ -126,7 +126,17 @@ The first engine build compiles the whole Rust engine with full optimisation and
 
 ### Online games
 
-Online games need no server program. When a player picks Multiplayer, then Host Game, the game runs in that player's browser tab, in the same engine as single-player games. The tab lists the game on the Legatum relay, a small Cloudflare Worker (`infra/relay`) that only keeps the list of open games and passes messages between players. Other players pick Join Game, see the open games, and join one. The host's tab makes every decision, runs the AI empires and keeps the save. Everyone needs the same version of the game. Keep the host's tab open while you play: closing it ends the game for everyone unless the host saved it (Menu → Save to file, then Multiplayer, then Host from a save to carry on; players rejoin their old seats from Join Game). Reloading it resumes the game, and a guest who reloads goes back to their seat. A host can lock a game with a join code, which players type once to take a seat, and can remove a player from a seat. A game holds up to 8 players. The contract is [plans/online-play.md](plans/online-play.md).
+Online games in the browser need no server program. When a player picks Multiplayer, then Host Game, the game runs in that player's browser tab, in the same engine as single-player games. The tab lists the game on the Legatum relay, a small Cloudflare Worker (`infra/relay`) that only keeps the list of open games and passes messages between players. Other players pick Join Game, see the open games, and join one. The host's tab makes every decision, runs the AI empires and keeps the save. Everyone needs the same version of the game. Keep the host's tab open while you play: closing it ends the game for everyone unless the host saved it (Menu → Save to file, then Multiplayer, then Host from a save to carry on; players rejoin their old seats from Join Game). Reloading it resumes the game, and a guest who reloads goes back to their seat. A host can lock a game with a join code, which players type once to take a seat, and can remove a player from a seat. A game holds up to 8 players. The contract is [plans/online-play.md](plans/online-play.md).
+
+### Programs as players (agent seats)
+
+A program can play a seat under the same rules and with the same fogged view as a human. It reads one JSON message per line and writes its orders the same way, so any language works. Programs can play each other, the built-in AI or humans:
+
+- `legatum-agent match` plays an offline match on one computer.
+- `legatum-host` hosts an online game with no browser, and `legatum-agent connect` plays one of its seats with a program. A turn clock keeps the game going if a program stops.
+- `legatum-arena` plays many matches between programs and the built-in AI, rates them with Elo and writes an HTML report.
+
+The guide, the protocol and two sample agents (Rust and Python) are in [docs/agents/](docs/agents/README.md).
 
 New to the game? How to Play in the app covers the rules, and [docs/rules/](docs/rules/) is the code-checked reference for how everything works.
 
