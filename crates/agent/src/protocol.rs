@@ -43,7 +43,8 @@ pub enum ToAgent {
         /// Refused orders are dropped; the others are played.
         rejected: Vec<OrderError>,
     },
-    /// The game is over, or the seat is out of it. Exit after reading it.
+    /// The match is over. Exit after reading it. An eliminated seat gets no more turns, and gets
+    /// this message when the match ends.
     End { result: MatchResult },
 }
 

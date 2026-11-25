@@ -361,6 +361,7 @@ name = "legatum-agent"
 version = "0.1.0"
 dependencies = [
  "legatum-core",
+ "legatum-wasm",
  "serde",
  "serde_json",
 ]
