@@ -3,4 +3,5 @@
 
 pub mod config;
 pub mod ratings;
+pub mod run;
 pub mod schedule;
