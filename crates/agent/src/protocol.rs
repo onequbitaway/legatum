@@ -87,7 +87,8 @@ pub struct PlayerInfo {
     pub player: PlayerId,
     pub team: TeamId,
     pub faction: Faction,
-    /// `agent` for a seat played by a program, `ai` for the built-in AI.
+    /// `agent` for a seat played by a program, `ai` for the built-in AI, `remote` for an online
+    /// seat that a person or a program plays (the host cannot tell which).
     pub kind: SeatKind,
 }
 
@@ -96,6 +97,7 @@ pub struct PlayerInfo {
 pub enum SeatKind {
     Agent,
     Ai,
+    Remote,
 }
 
 /// Time the game waits for each answer. A late or bad answer counts as no orders.
